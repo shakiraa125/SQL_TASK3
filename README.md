@@ -5,86 +5,120 @@ Domain:SQL\
 Duration:December 20th, 2024 to February 20th, 2025**\
 
 
-## Database Backup and Recovery
+## Data Migration Between MySQL and PostgreSQL
 ________________________________________
-Objective
-The objective of this project is to demonstrate how to back up a MySQL database and restore it in case of failure using mysqldump for backup and MySQL CLI for restoration. The deliverables include the backup and restore scripts that can be executed in a Windows environment using Git Bash.
+Project Overview
+This project involves migrating data from a MySQL database to a PostgreSQL database while ensuring data integrity. The goal is to demonstrate how to handle schema migration, data transfer, and validation programmatically using Python.
+Technologies Used
+•	Databases: MySQL and PostgreSQL
+•	Programming Language: Python
+•	Libraries: 
+o	pymysql for connecting to MySQL
+o	psycopg2 for connecting to PostgreSQL
+o	pandas for handling dataframes
+o	sqlalchemy for database engines
 ________________________________________
-Tools and Technologies
-•	Database: MySQL
-•	Backup Utility: mysqldump
-•	Scripting: Shell scripts (backup.sh, restore.sh)
-•	Environment: Git Bash on Windows
+Database Details
+MySQL Database
+•	Host: localhost
+•	Username: …..
+•	Password  ……
+•	Database Name: source_db
+•	Table: employees
+Sample Schema and Data:
+CREATE TABLE employees (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100),
+    age INT,
+    department VARCHAR(50)
+);
+
+INSERT INTO employees (name, age, department)
+VALUES
+    ('Alice', 30, 'HR'),
+    ('Bob', 25, 'Engineering'),
+    ('Charlie', 28, 'Marketing');
+PostgreSQL Database
+•	Host: localhost
+•	Username:……..
+•	Password: ………
+•	Database Name: target_db
+•	Table: employees
+Sample Schema:
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    age INT,
+    department VARCHAR(50)
+);
 ________________________________________
-Steps to Implement the Project
-1. Backup Script
-A shell script (backup.sh) was created to back up the database using mysqldump.
-Script Content:
-#!/bin/bash
+Steps Followed
+Step 1: Install Required Libraries
+Installed the necessary Python libraries using the command:
+pip install pymysql psycopg2 pandas sqlalchemy
+Step 2: Create SQLAlchemy Engines
+Used the following connection strings for MySQL and PostgreSQL:
+mysql_engine = create_engine("mysql+pymysql://root:shakira@localhost/source_db")
+postgres_engine = create_engine("postgresql+psycopg2://postgres:shakisiru@localhost/target_db")
+Step 3: Migrate Data Using Python
+The Python script performed the following actions:
+1.	Connected to both MySQL and PostgreSQL databases.
+2.	Retrieved data from the MySQL employees table.
+3.	Inserted the data into the PostgreSQL employees table.
+4.	Verified the integrity by comparing row counts.
+Python Code:
+import pymysql
+import psycopg2
+import pandas as pd
+from sqlalchemy import create_engine
+# Create database connections
+mysql_engine = create_engine("mysql+pymysql://root:shakira@localhost/Hotelbooking")
+postgres_engine = create_engine("postgresql+psycopg2://postgres:shakisiru@localhost/testdb")
+# Read data from MySQL
+df = pd.read_sql("SELECT * FROM employees", mysql_engine)
 
-# Variables
-TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-BACKUP_DIR="C:/DataEngineer/POSTGRESQL/BACKUP_DIR"
-DB_NAME="TestDB"
-USER="root"
-PASSWORD="password"
+# Write data to PostgreSQL
+df.to_sql("employees", postgres_engine, if_exists="append", index=False)
 
-# Create the backup directory if it does not exist
-mkdir -p $BACKUP_DIR
+# Verify data integrity
+mysql_count = len(df)
+with postgres_engine.connect() as conn:
+    postgres_count = conn.execute("SELECT COUNT(*) FROM employees").scalar()
 
-# Perform the database backup
-mysqldump -u $USER -p$PASSWORD $DB_NAME > $BACKUP_DIR/${DB_NAME}_$TIMESTAMP.sql
-
-# Notify success
-echo "Backup completed: $BACKUP_DIR/${DB_NAME}_$TIMESTAMP.sql"
-Execution Steps:
-1.	Open Git Bash.
-2.	Navigate to the directory containing backup.sh:
-cd /c/DataEngineer/POSTGRESQL
-3.	Make the script executable:
-chmod +x backup.sh
-4.	Run the script:
-./backup.sh
-5.	Verify the backup file is created in the specified directory.
-2. Restore Script
-A shell script (restore.sh) was created to restore the database from a backup file.
-Script Content:
-#!/bin/bash
-
-# Variables
-BACKUP_FILE="C:/DataEngineer/POSTGRESQL/BACKUP_DIR/TestDB_2025-01-10_15-09-00.sql"
-DB_NAME="TestDB"
-USER="root"
-PASSWORD="password"
-
-# Confirm before proceeding
-echo "You are about to restore the database $DB_NAME from the backup file $BACKUP_FILE."
-read -p "Are you sure? (y/n): " CONFIRM
-
-if [[ "$CONFIRM" != "y" ]]; then
-  echo "Restore canceled."
-  exit 1
-fi
-# Restore the database
-mysql -u $USER -p$PASSWORD $DB_NAME < $BACKUP_FILE
-
-# Notify success
-echo "Database $DB_NAME restored successfully from $BACKUP_FILE."
-Execution Steps:
-1.	Open Git Bash.
-2.	Navigate to the directory containing restore.sh:
-cd /c/DataEngineer/POSTGRESQL
-3.	Make the script executable:
-chmod +x restore.sh
-4.	Run the script:
-./restore.sh
-5.	Confirm the restoration process when prompted.
-6.	Verify the restored database using MySQL Workbench or CLI.
+if mysql_count == postgres_count:
+    print("Data migrated successfully with integrity!")
+else:
+print("Data mismatch detected!")
+Step 4: Validate Migration
+The migrated data was validated using SQL queries in both databases:
+MySQL:
+SELECT * FROM employees;
+PostgreSQL:
+SELECT * FROM employees;
+Expected Output:
+id	name	age	department
+1	Alice	30	HR
+2	Bob	25	Engineering
+3	Charlie	28	Marketing
 ________________________________________
+
 Results
-•	Backup files were successfully generated in the specified directory with timestamps.
-•	The database was restored successfully using the backup files.
-•	Both processes were automated using shell scripts, making it easy to replicate the steps.
+•	Data was successfully migrated from MySQL to PostgreSQL.
+•	Data integrity was confirmed with identical row counts in both databases.
+•	The employees table in PostgreSQL now contains the following data: 
+id	name	age	department
+1	Alice	30	HR
+2	Bob	25	Engineering
+3	Charlie	28	Marketing
 ________________________________________
 Conclusion
-This project demonstrates the importance of implementing regular database backups and reliable restoration mechanisms to ensure data integrity and availability in case of failures. The provided scripts offer a simple yet effective solution for database backup and recovery in a MySQL environment.
+This project demonstrates an effective approach to migrating data between databases. The Python-based solution is scalable and can be adapted for more complex migrations involving larger datasets or additional transformations.
+________________________________________
+
+Future Improvements
+1.	Automate the process with a scheduled task or job.
+2.	Implement more robust logging and monitoring for large-scale migrations.
+3.	Extend the script to handle schema creation dynamically.
+________________________________________
+Prepared by: shakira
+
