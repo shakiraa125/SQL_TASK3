@@ -71,16 +71,16 @@ import pymysql
 import psycopg2
 import pandas as pd
 from sqlalchemy import create_engine
-# Create database connections
+### Create database connections
 mysql_engine = create_engine("mysql+pymysql://root:shakira@localhost/Hotelbooking")
 postgres_engine = create_engine("postgresql+psycopg2://postgres:shakisiru@localhost/testdb")
-# Read data from MySQL
+### Read data from MySQL
 df = pd.read_sql("SELECT * FROM employees", mysql_engine)
 
-# Write data to PostgreSQL
+### Write data to PostgreSQL
 df.to_sql("employees", postgres_engine, if_exists="append", index=False)
 
-# Verify data integrity
+### Verify data integrity
 mysql_count = len(df)
 with postgres_engine.connect() as conn:
     postgres_count = conn.execute("SELECT COUNT(*) FROM employees").scalar()
